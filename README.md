@@ -2,6 +2,7 @@
 
 This respository contains all the solution for solved assigment related to cs231n course(in 2016 by Andrej Karpathy).
 All the assignment details can be found here
+
 http://cs231n.github.io/assignments2016/assignment1/
 
 http://cs231n.github.io/assignments2016/assignment2/
