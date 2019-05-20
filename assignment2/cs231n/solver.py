@@ -31,7 +31,7 @@ class Solver(object):
     'X_train': # training data
     'y_train': # training labels
     'X_val': # validation data
-    'X_train': # validation labels
+    'y_val': # validation labels
   }
   model = MyAwesomeModel(hidden_size=100, reg=10)
   solver = Solver(model, data,
@@ -126,7 +126,6 @@ class Solver(object):
     if not hasattr(optim, self.update_rule):
       raise ValueError('Invalid update_rule "%s"' % self.update_rule)
     self.update_rule = getattr(optim, self.update_rule)
-
     self._reset()
 
 
@@ -146,7 +145,7 @@ class Solver(object):
     # Make a deep copy of the optim_config for each parameter
     self.optim_configs = {}
     for p in self.model.params:
-      d = {k: v for k, v in self.optim_config.iteritems()}
+      d = {k: v for k, v in self.optim_config.items()}
       self.optim_configs[p] = d
 
 
@@ -166,7 +165,7 @@ class Solver(object):
     self.loss_history.append(loss)
 
     # Perform a parameter update
-    for p, w in self.model.params.iteritems():
+    for p, w in self.model.params.items():
       dw = grads[p]
       config = self.optim_configs[p]
       next_w, next_config = self.update_rule(w, dw, config)
@@ -204,7 +203,7 @@ class Solver(object):
     if N % batch_size != 0:
       num_batches += 1
     y_pred = []
-    for i in xrange(num_batches):
+    for i in range(int(num_batches)):
       start = i * batch_size
       end = (i + 1) * batch_size
       scores = self.model.loss(X[start:end])
@@ -223,7 +222,7 @@ class Solver(object):
     iterations_per_epoch = max(num_train / self.batch_size, 1)
     num_iterations = self.num_epochs * iterations_per_epoch
 
-    for t in xrange(num_iterations):
+    for t in range(int(num_iterations)):
       self._step()
 
       # Maybe print training loss
@@ -256,7 +255,7 @@ class Solver(object):
         if val_acc > self.best_val_acc:
           self.best_val_acc = val_acc
           self.best_params = {}
-          for k, v in self.model.params.iteritems():
+          for k, v in self.model.params.items():
             self.best_params[k] = v.copy()
 
     # At the end of training swap the best params into the model
