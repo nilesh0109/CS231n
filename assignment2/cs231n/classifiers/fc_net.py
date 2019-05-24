@@ -12,7 +12,7 @@ class TwoLayerNet(object):
   
   The architecure should be affine - relu - affine - softmax.
 
-  Note that this class does not implement gradient descent; instead, it
+  Notnot implement e that this class does gradient descent; instead, it
   will interact with a separate Solver object that is responsible for running
   optimization.
 
@@ -45,7 +45,10 @@ class TwoLayerNet(object):
     # weights and biases using the keys 'W1' and 'b1' and second layer weights #
     # and biases using the keys 'W2' and 'b2'.                                 #
     ############################################################################
-    pass
+    self.params['W1'] = weight_scale * np.random.randn(input_dim,hidden_dim)
+    self.params['b1'] = np.zeros(hidden_dim) 
+    self.params['W2'] = weight_scale * np.random.randn(hidden_dim, num_classes) 
+    self.params['b2'] = np.zeros(num_classes)
     ############################################################################
     #                             END OF YOUR CODE                             #
     ############################################################################
@@ -75,7 +78,8 @@ class TwoLayerNet(object):
     # TODO: Implement the forward pass for the two-layer net, computing the    #
     # class scores for X and storing them in the scores variable.              #
     ############################################################################
-    pass
+    out1, layer1_cache = affine_relu_forward(X, self.params['W1'], self.params['b1'])
+    scores, scores_cache = affine_forward(out1, self.params['W2'], self.params['b2'])
     ############################################################################
     #                             END OF YOUR CODE                             #
     ############################################################################
@@ -95,11 +99,15 @@ class TwoLayerNet(object):
     # automated tests, make sure that your L2 regularization includes a factor #
     # of 0.5 to simplify the expression for the gradient.                      #
     ############################################################################
-    pass
+    loss, grad_out = softmax_loss(scores, y)
+    loss = loss + 0.5 * self.reg * (np.sum(self.params['W1'] ** 2) + np.sum(self.params['W2'] ** 2))
+    grad_hidden, grads['W2'], grads['b2'] = affine_backward(grad_out , scores_cache)
+    grads['W2'] += self.reg * self.params['W2']
+    grad_input, grads['W1'], grads['b1'] = affine_relu_backward(grad_hidden , layer1_cache)
+    grads['W1'] += self.reg * self.params['W1']
     ############################################################################
     #                             END OF YOUR CODE                             #
     ############################################################################
-
     return loss, grads
 
 
@@ -161,7 +169,11 @@ class FullyConnectedNet(object):
     # beta2, etc. Scale parameters should be initialized to one and shift      #
     # parameters should be initialized to zero.                                #
     ############################################################################
-    pass
+    for i in range(self.num_layers):
+      input_data_dim = input_dim if i == 0 else hidden_dims[i-1]
+      output_data_dim = num_classes if i == self.num_layers - 1 else hidden_dims[i] 
+      self.params['W'+str(i+1)] = weight_scale * np.random.randn(input_data_dim, output_data_dim)
+      self.params['b'+str(i+1)] = np.zeros(output_data_dim)
     ############################################################################
     #                             END OF YOUR CODE                             #
     ############################################################################
@@ -185,7 +197,7 @@ class FullyConnectedNet(object):
       self.bn_params = [{'mode': 'train'} for i in xrange(self.num_layers - 1)]
     
     # Cast all parameters to the correct datatype
-    for k, v in self.params.iteritems():
+    for k, v in self.params.items():
       self.params[k] = v.astype(dtype)
 
 
@@ -219,7 +231,17 @@ class FullyConnectedNet(object):
     # self.bn_params[1] to the forward pass for the second batch normalization #
     # layer, etc.                                                              #
     ############################################################################
-    pass
+    input = X
+    cache_affine, cache_relu = {},{}
+    for i in range(self.num_layers):
+      ind = str(i+1)
+      w, b = self.params['W'+ind], self.params['b'+ind]
+      out_affine, cache_affine['l'+ind] = affine_forward(input, w, b)
+      if( i != self.num_layers - 1 ):
+        out_relu, cache_relu['l'+ind] = relu_forward(out_affine)
+        input = out_relu
+    scores = out_affine
+    
     ############################################################################
     #                             END OF YOUR CODE                             #
     ############################################################################
@@ -242,7 +264,19 @@ class FullyConnectedNet(object):
     # automated tests, make sure that your L2 regularization includes a factor #
     # of 0.5 to simplify the expression for the gradient.                      #
     ############################################################################
-    pass
+    loss, grad_out = softmax_loss(scores, y)
+    reg_term = [np.sum(self.params['W'+str(i+1)] ** 2) for i in range(self.num_layers)]
+    loss = loss + 0.5 * self.reg * np.sum(reg_term)
+    for i in range(self.num_layers):
+      ind = str(self.num_layers - i)
+      # print(grad_out)
+      # print(cache_relu.keys())
+      # print(cache_affine.keys())
+      # print(np.shape(cache_affine['l3']))
+      if(i !=0):
+        grad_out =relu_backward(grad_out, cache_relu['l'+ind])
+      grad_out, grads['W'+ind], grads['b'+ind] = affine_backward(grad_out, cache_affine['l'+ind])
+      grads['W'+ind] += self.reg * self.params['W'+ind]
     ############################################################################
     #                             END OF YOUR CODE                             #
     ############################################################################
