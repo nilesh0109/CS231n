@@ -194,7 +194,7 @@ class FullyConnectedNet(object):
     # pass of the second batch normalization layer, etc.
     self.bn_params = []
     if self.use_batchnorm:
-      self.bn_params = [{'mode': 'train'} for i in xrange(self.num_layers - 1)]
+      self.bn_params = [{'mode': 'train'} for i in range(self.num_layers - 1)]
     
     # Cast all parameters to the correct datatype
     for k, v in self.params.items():
@@ -232,13 +232,15 @@ class FullyConnectedNet(object):
     # layer, etc.                                                              #
     ############################################################################
     input = X
-    cache_affine, cache_relu = {},{}
+    cache_affine, cache_relu, cache_batchnorm = {}, {}, {}
     for i in range(self.num_layers):
       ind = str(i+1)
       w, b = self.params['W'+ind], self.params['b'+ind]
       out_affine, cache_affine['l'+ind] = affine_forward(input, w, b)
-      if( i != self.num_layers - 1 ):
-        out_relu, cache_relu['l'+ind] = relu_forward(out_affine)
+      if( i < self.num_layers - 1 ):
+        if self.use_batchnorm:
+          out_batchnorm, cache_batchnorm['l'+ind] = batchnorm_forward(out_affine, gamma = 5, beta=2, bn_param= self.bn_params[i])
+        out_relu, cache_relu['l'+ind] = relu_forward(out_batchnorm if self.use_batchnorm else out_affine)
         input = out_relu
     scores = out_affine
     
@@ -275,6 +277,8 @@ class FullyConnectedNet(object):
       # print(np.shape(cache_affine['l3']))
       if(i !=0):
         grad_out =relu_backward(grad_out, cache_relu['l'+ind])
+        if self.use_batchnorm:
+          grad_out, _, __= batchnorm_backward(grad_out, cache_batchnorm['l'+ind])
       grad_out, grads['W'+ind], grads['b'+ind] = affine_backward(grad_out, cache_affine['l'+ind])
       grads['W'+ind] += self.reg * self.params['W'+ind]
     ############################################################################
