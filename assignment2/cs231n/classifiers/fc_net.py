@@ -273,10 +273,6 @@ class FullyConnectedNet(object):
     loss = loss + 0.5 * self.reg * np.sum(reg_term)
     for i in range(self.num_layers):
       ind = str(self.num_layers - i)
-      # print(grad_out)
-      # print(cache_relu.keys())
-      # print(cache_affine.keys())
-      # print(np.shape(cache_affine['l3']))
       if(i !=0):
         if self.use_dropout:
           grad_out = dropout_backward(grad_out, cache_dropout['l'+ind])
