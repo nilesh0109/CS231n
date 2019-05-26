@@ -232,7 +232,7 @@ class FullyConnectedNet(object):
     # layer, etc.                                                              #
     ############################################################################
     input = X
-    cache_affine, cache_relu, cache_batchnorm = {}, {}, {}
+    cache_affine, cache_relu, cache_batchnorm, cache_dropout = {}, {}, {}, {}
     for i in range(self.num_layers):
       ind = str(i+1)
       w, b = self.params['W'+ind], self.params['b'+ind]
@@ -241,7 +241,9 @@ class FullyConnectedNet(object):
         if self.use_batchnorm:
           out_batchnorm, cache_batchnorm['l'+ind] = batchnorm_forward(out_affine, gamma = 5, beta=2, bn_param= self.bn_params[i])
         out_relu, cache_relu['l'+ind] = relu_forward(out_batchnorm if self.use_batchnorm else out_affine)
-        input = out_relu
+        if self.use_dropout:
+          out_dropout, cache_dropout['l'+ind] = dropout_forward(out_relu, self.dropout_param)
+        input = out_dropout if self.use_dropout else out_relu
     scores = out_affine
     
     ############################################################################
@@ -276,6 +278,8 @@ class FullyConnectedNet(object):
       # print(cache_affine.keys())
       # print(np.shape(cache_affine['l3']))
       if(i !=0):
+        if self.use_dropout:
+          grad_out = dropout_backward(grad_out, cache_dropout['l'+ind])
         grad_out =relu_backward(grad_out, cache_relu['l'+ind])
         if self.use_batchnorm:
           grad_out, _, __= batchnorm_backward(grad_out, cache_batchnorm['l'+ind])
