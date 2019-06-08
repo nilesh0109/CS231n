@@ -177,7 +177,10 @@ def word_embedding_forward(x, W):
   #                                                                            #
   # HINT: This should be very simple.                                          #
   ##############################################################################
-  pass
+  N,T = x.shape
+  V,D = W.shape
+  out = np.array([[W[j]] for i in x for j in i]).reshape((N,T,D))
+  cache = x, W
   ##############################################################################
   #                               END OF YOUR CODE                             #
   ##############################################################################
