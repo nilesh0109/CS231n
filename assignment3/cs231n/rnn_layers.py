@@ -263,7 +263,22 @@ def lstm_step_forward(x, prev_h, prev_c, Wx, Wh, b):
   # TODO: Implement the forward pass for a single timestep of an LSTM.        #
   # You may want to use the numerically stable sigmoid implementation above.  #
   #############################################################################
-  pass
+  def sigmoid(x):
+    return 1/(1 + np.exp(-x))
+
+  N, H = prev_c.shape
+  a = x.dot(Wx) + prev_h.dot(Wh) + b
+  a_i = a[:,0:H]
+  a_f = a[:, H:2*H]
+  a_o = a[:, 2*H:3*H]
+  a_g = a[:, 3*H:4*H]
+  i = sigmoid(a_i)
+  f = sigmoid(a_f)
+  o = sigmoid(a_o)
+  g = np.tanh(a_g)
+  next_c = f * prev_c + i * g
+  next_h = o * np.tanh(next_c)
+  cache = a_i, a_f, a_o, i, f, o, g, next_c, prev_c, Wx, Wh, x, prev_h
   ##############################################################################
   #                               END OF YOUR CODE                             #
   ##############################################################################
@@ -288,14 +303,51 @@ def lstm_step_backward(dnext_h, dnext_c, cache):
   - dWh: Gradient of hidden-to-hidden weights, of shape (H, 4H)
   - db: Gradient of biases, of shape (4H,)
   """
-  dx, dh, dc, dWx, dWh, db = None, None, None, None, None, None
+  dx, dprev_h, dprev_c, dWx, dWh, db = None, None, None, None, None, None
   #############################################################################
   # TODO: Implement the backward pass for a single timestep of an LSTM.       #
   #                                                                           #
   # HINT: For sigmoid and tanh you can compute local derivatives in terms of  #
   # the output value from the nonlinearity.                                   #
   #############################################################################
-  pass
+  dx, dprev_h, dprev_c, dWx, dWh, db = 0, 0,0,0,0,0
+  a_i, a_f, a_o, i, f, o, g, next_c, prev_c, Wx, Wh, x, prev_h = cache
+
+  def sigmoid(x):
+    return 1/(1 + np.exp(-x))
+
+  def dx_sigmoid(x):
+    sigx = sigmoid(x)
+    return sigx * (1-sigx)
+  
+  d_o = dnext_h * np.tanh(next_c)
+  d_ao = d_o * dx_sigmoid(a_o)
+
+  dnext_c +=  dnext_h * o * (1 - np.square(np.tanh(next_c)))
+
+  d_f = dnext_c * prev_c
+  d_af = d_f * dx_sigmoid(a_f)
+
+  d_i = dnext_c * g
+  d_ai = d_i * dx_sigmoid(a_i)
+  
+  d_g = dnext_c * i
+  d_ag = d_g * (1 - np.square(g))
+
+  d_a = np.column_stack((d_ai, d_af, d_ao, d_ag))
+
+  dprev_c =  dnext_c * f
+
+  db = d_a.sum(axis=0)
+
+  dprev_h = d_a.dot(Wh.T)
+
+  dWh = prev_h.T.dot(d_a)
+  
+  dx = d_a.dot(Wx.T)
+
+  dWx = x.T.dot(d_a)
+  
   ##############################################################################
   #                               END OF YOUR CODE                             #
   ##############################################################################
