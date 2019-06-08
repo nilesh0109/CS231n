@@ -32,7 +32,9 @@ def rnn_step_forward(x, prev_h, Wx, Wh, b):
   # hidden state and any values you need for the backward pass in the next_h   #
   # and cache variables respectively.                                          #
   ##############################################################################
-  pass
+  tan_h_input = x.dot(Wx) + prev_h.dot(Wh) + b
+  next_h = np.tanh(tan_h_input)
+  cache = x, prev_h, Wx, Wh, tan_h_input
   ##############################################################################
   #                               END OF YOUR CODE                             #
   ##############################################################################
@@ -61,7 +63,13 @@ def rnn_step_backward(dnext_h, cache):
   # HINT: For the tanh function, you can compute the local derivative in terms #
   # of the output value from tanh.                                             #
   ##############################################################################
-  pass
+  x, prev_h, Wx, Wh, tan_h_input = cache
+  d_tanh = dnext_h * (1 - tan_h_input ** 2)
+  dx = d_tanh.dot(Wx.T)
+  dprev_h = d_tanh.dot(Wh.T)
+  dWx = x.T.dot(d_tanh)
+  dWh =  prev_h.T.dot(d_tanh)
+  db = d_tanh.sum(axis=0)
   ##############################################################################
   #                               END OF YOUR CODE                             #
   ##############################################################################
@@ -412,7 +420,7 @@ def temporal_softmax_loss(x, y, mask, verbose=False):
   dx_flat /= N
   dx_flat *= mask_flat[:, None]
   
-  if verbose: print 'dx_flat: ', dx_flat.shape
+  if verbose: print('dx_flat: ', dx_flat.shape)
   
   dx = dx_flat.reshape(N, T, V)
   
