@@ -138,7 +138,7 @@ class PretrainedCNN(object):
     layer_caches = []
 
     prev_a = X
-    for i in xrange(start, end + 1):
+    for i in range(start, end + 1):
       i1 = i + 1
       if 0 <= i < len(self.conv_params):
         # This is a conv layer
