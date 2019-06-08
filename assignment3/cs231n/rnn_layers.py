@@ -208,7 +208,16 @@ def word_embedding_backward(dout, cache):
   #                                                                            #
   # HINT: Look up the function np.add.at                                       #
   ##############################################################################
-  pass
+  N, T, D = dout.shape
+  x, W = cache
+  V, D = W.shape
+  dW = np.zeros((V,D))
+  np.add.at(dW, x, dout)
+
+  ## ALTERNATIVE SOLUTION
+  # for row in range(N):
+  #  for col in range(T):
+  #     dW[ x[row,col]  , :] += dout[row,col, :]
   ##############################################################################
   #                               END OF YOUR CODE                             #
   ##############################################################################
