@@ -136,7 +136,20 @@ def rnn_backward(dh, cache):
   # sequence of data. You should use the rnn_step_backward function that you   #
   # defined above.                                                             #
   ##############################################################################
-  pass
+  N, T, H = dh.shape
+  dprev_h_t = 0.0
+  dx = np.zeros((N,T))
+  dh0, dWx, dWh, db = 0.0,0.0,0.0,0.0
+  for i in range(T-1,-1,-1):
+    cache_index = i*5
+    dx_t, dprev_h_t, dWx_t, dWh_t, db_t = rnn_step_backward(dh[:,i,:]+ dprev_h_t, cache[cache_index:cache_index+5])
+    if(np.ndim !=3):
+      dx = np.resize(dx, (N,T,dWx_t.shape[0]))
+    dx[:,i,:] = dx_t
+    dh0 = dprev_h_t
+    dWx += dWx_t
+    dWh += dWh_t
+    db += db_t
   ##############################################################################
   #                               END OF YOUR CODE                             #
   ##############################################################################
