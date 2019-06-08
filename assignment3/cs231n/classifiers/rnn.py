@@ -142,10 +142,10 @@ class CaptioningRNN(object):
     embedding_out, embedding_cache = word_embedding_forward(captions_in, W_embed)
     
     #step 3
-    #if(self.cell_type == 'RNN'):
-    rnn_out, rnn_cache = rnn_forward(embedding_out, features_out, Wx, Wh, b)
-    #elif(self.cell_type == 'LSTM'):
-    #pass
+    if(self.cell_type == 'rnn'):
+      rnn_out, rnn_cache = rnn_forward(embedding_out, features_out, Wx, Wh, b)
+    else:
+      rnn_out, rnn_cache = lstm_forward(embedding_out, features_out, Wx, Wh, b)
     
     #step 4
     affine_out, affine_cache = temporal_affine_forward(rnn_out, W_vocab, b_vocab)
@@ -157,10 +157,11 @@ class CaptioningRNN(object):
     grad_up, grads['W_vocab'], grads['b_vocab'] = temporal_affine_backward(grad_loss, affine_cache)
 
     #step 7
-    #if(self.cell_type == 'RNN'):
-    grad_up, grad_h0, grads['Wx'], grads['Wh'], grads['b'] = rnn_backward(grad_up, rnn_cache)
-    #elif(self.cell_type == 'LSTM'):
-    #  pass
+    if(self.cell_type == 'rnn'):
+      grad_up, grad_h0, grads['Wx'], grads['Wh'], grads['b'] = rnn_backward(grad_up, rnn_cache)
+    else:
+      grad_up, grad_h0, grads['Wx'], grads['Wh'], grads['b'] = lstm_backward(grad_up, rnn_cache)
+    
 
     #step 8
     grads['W_embed'] = word_embedding_backward(grad_up, embedding_cache)
@@ -235,23 +236,25 @@ class CaptioningRNN(object):
 
     captions_in = np.array([[self._start], [self._start]])
     hidden_in = features_out
+    
     for i in range(T):
       
       # step 2
       embedding_out, _ = word_embedding_forward(captions_in, W_embed)
-
       # step 3
-      # if self.cell_type ==  'RNN':
-      next_h, _ = rnn_step_forward(embedding_out, hidden_in, Wx, Wh, b)
-      #elif self.cell_type == 'LSTM':
-      #pass
+      if self.cell_type ==  'rnn':
+        next_h, _ = rnn_step_forward(embedding_out[:,0,:], hidden_in, Wx, Wh, b)
+      else:
+        prev_c = np.zeros((N, hidden_in.shape[1])) if i == 0 else next_c
+        next_h, next_c, _ = lstm_step_forward(embedding_out[:,0,:], hidden_in, prev_c, Wx, Wh, b)
+      next_h = np.expand_dims(next_h, axis=1)
 
       rnn_out, _ = temporal_affine_forward(next_h, W_vocab, b_vocab)
 
       # step 4
       
       captions_in = np.array([np.argmax(rnn_out, axis=2)[0]])
-      hidden_in = next_h
+      hidden_in = next_h[:,0,:]
       captions[:, i] = captions_in[0]
     ############################################################################
     #                             END OF YOUR CODE                             #
