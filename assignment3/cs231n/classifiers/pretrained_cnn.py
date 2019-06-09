@@ -42,7 +42,7 @@ class PretrainedCNN(object):
       self.params['beta%d' % (i + 1)] = np.zeros(next_dim)
       self.bn_params.append({'mode': 'train'})
       prev_dim = next_dim
-      if self.conv_params[i]['stride'] == 2: cur_size /= 2
+      if self.conv_params[i]['stride'] == 2: cur_size //= 2
     # Add a fully-connected layers
     fan_in = cur_size * cur_size * self.num_filters[-1]
     self.params['W%d' % (i + 2)] = np.sqrt(2.0 / fan_in) * np.random.randn(fan_in, hidden_dim)
@@ -70,7 +70,7 @@ class PretrainedCNN(object):
     """
 
     # Before loading weights we need to make a dummy forward pass to initialize
-    # the running averages in the bn_pararams
+    # the running averages in the bn_params
     x = np.random.randn(1, 3, self.input_size, self.input_size)
     y = np.random.randint(self.num_classes, size=1)
     loss, grads = self.loss(x, y)
