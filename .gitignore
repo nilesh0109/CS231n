@@ -2,4 +2,6 @@
 */.DS_Store
 ASSIGNMENT3/cs231n/datasets
 .ipynb_checkpoints
-
+coco_captioning/
+pretrained_model.h5
+tiny-imagenet-100-A
